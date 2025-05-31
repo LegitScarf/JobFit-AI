@@ -175,21 +175,28 @@ system_prompt = """
 You are an advanced AI Applicant Tracking System (ATS) designed to evaluate resumes against job descriptions.
 You assess candidate suitability based on relevance of skills, experiences, and qualifications to the job role.
 
-Your response should be in JSON format with the following structure:
+CRITICAL: You must respond ONLY with valid JSON format. Do not include any text before or after the JSON.
+
+Your response must be exactly in this JSON structure:
 {
-    "overall_score": <score from 0-10>,
-    "explanation": "<brief professional explanation>",
+    "overall_score": 7,
+    "explanation": "Brief professional explanation of the evaluation",
     "matching_skills": ["skill1", "skill2", "skill3"],
     "missing_skills": ["skill1", "skill2"],
-    "experience_match": "<how well experience aligns>",
-    "education_match": "<education relevance>",
+    "experience_match": "How well experience aligns with job requirements",
+    "education_match": "Education relevance to the position",
     "recommendations": ["suggestion1", "suggestion2"],
-    "interview_likelihood": "<High/Medium/Low>",
+    "interview_likelihood": "High",
     "key_strengths": ["strength1", "strength2"],
     "areas_for_improvement": ["area1", "area2"]
 }
 
-Be fair, unbiased, and avoid assumptions not supported by the text.
+Rules:
+- overall_score: Must be integer 0-10
+- interview_likelihood: Must be exactly "High", "Medium", or "Low"
+- All arrays can be empty [] if no items found
+- All strings should be concise and professional
+- Return ONLY the JSON object, no other text
 """
 
 def user_prompt_for(job_description, resume_text):
@@ -211,7 +218,7 @@ def messages_for(job_description, resume_text):
         {"role": "user", "content": user_prompt_for(job_description, resume_text)}
     ]
 
-# Enhanced evaluation function
+# Enhanced evaluation function with better JSON parsing
 def evaluate_resume(job_description, url):
     try:
         # Check if OpenAI client is initialized
@@ -230,20 +237,67 @@ def evaluate_resume(job_description, url):
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            temperature=0.3
+            temperature=0.1,  # Lower temperature for more consistent output
+            max_tokens=1500
         )
         
         # Clean up the PDF file
         if os.path.exists(file_path):
             os.remove(file_path)
         
-        result = response.choices[0].message.content
+        result_text = response.choices[0].message.content
         
-        # Try to parse JSON, fallback to plain text if it fails
+        # Clean the response text
+        result_text = result_text.strip()
+        
+        # Remove any markdown code blocks if present
+        if result_text.startswith("```json"):
+            result_text = result_text.replace("```json", "").replace("```", "").strip()
+        elif result_text.startswith("```"):
+            result_text = result_text.replace("```", "").strip()
+        
+        # Try to parse JSON
         try:
-            return json.loads(result)
-        except:
-            return {"overall_score": 0, "explanation": result, "error": "Could not parse structured response"}
+            parsed_result = json.loads(result_text)
+            
+            # Validate required fields and provide defaults
+            validated_result = {
+                "overall_score": parsed_result.get("overall_score", 0),
+                "explanation": parsed_result.get("explanation", "Resume evaluated successfully"),
+                "matching_skills": parsed_result.get("matching_skills", []),
+                "missing_skills": parsed_result.get("missing_skills", []),
+                "experience_match": parsed_result.get("experience_match", "Experience evaluation completed"),
+                "education_match": parsed_result.get("education_match", "Education evaluation completed"),
+                "recommendations": parsed_result.get("recommendations", []),
+                "interview_likelihood": parsed_result.get("interview_likelihood", "Medium"),
+                "key_strengths": parsed_result.get("key_strengths", []),
+                "areas_for_improvement": parsed_result.get("areas_for_improvement", [])
+            }
+            
+            return validated_result
+            
+        except json.JSONDecodeError as e:
+            # If JSON parsing fails, create a structured response from the text
+            st.warning("⚠️ Received non-JSON response, parsing as text...")
+            
+            # Extract score using regex if possible
+            import re
+            score_match = re.search(r'score.*?(\d+)', result_text.lower())
+            score = int(score_match.group(1)) if score_match else 5
+            
+            return {
+                "overall_score": min(10, max(0, score)),  # Ensure score is between 0-10
+                "explanation": result_text[:500] + "..." if len(result_text) > 500 else result_text,
+                "matching_skills": [],
+                "missing_skills": [],
+                "experience_match": "Please see explanation for details",
+                "education_match": "Please see explanation for details", 
+                "recommendations": ["Review the detailed explanation for specific recommendations"],
+                "interview_likelihood": "Medium",
+                "key_strengths": [],
+                "areas_for_improvement": [],
+                "note": "Response was parsed from text format"
+            }
             
     except Exception as e:
         return {"error": str(e)}
