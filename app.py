@@ -95,12 +95,44 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize OpenAI client
+# Initialize OpenAI client with proper API key handling
 @st.cache_resource
 def init_openai_client():
-    return OpenAI()
-
-openai = init_openai_client()
+    try:
+        # Get API key from secrets or environment
+        api_key = None
+        
+        # Try Streamlit secrets first
+        if hasattr(st, 'secrets') and "OPENAI_API_KEY" in st.secrets:
+            api_key = st.secrets["OPENAI_API_KEY"]
+        # Fallback to environment variable
+        elif "OPENAI_API_KEY" in os.environ:
+            api_key = os.environ["OPENAI_API_KEY"]
+        
+        if not api_key:
+            st.error("❌ OpenAI API key not found. Please add it to Streamlit secrets or environment variables.")
+            st.info("💡 Add your API key in Streamlit Cloud: Settings → Secrets → OPENAI_API_KEY = \"your-key-here\"")
+            return None
+        
+        # Clean the API key (remove any whitespace, newlines, etc.)
+        api_key = api_key.strip().replace('\n', '').replace('\r', '').replace(' ', '')
+        
+        # Validate API key format
+        if not api_key.startswith("sk-"):
+            st.error("❌ Invalid API key format. OpenAI keys should start with 'sk-'")
+            st.info(f"🔍 Your key starts with: {api_key[:10]}...")
+            return None
+        
+        # Test the API key length (OpenAI keys are typically long)
+        if len(api_key) < 40:
+            st.error("❌ API key appears to be too short. Please check if it's complete.")
+            return None
+        
+        return OpenAI(api_key=api_key)
+        
+    except Exception as e:
+        st.error(f"❌ Error initializing OpenAI client: {str(e)}")
+        return None
 
 # Headers for downloading the PDF
 headers = {
@@ -182,6 +214,11 @@ def messages_for(job_description, resume_text):
 # Enhanced evaluation function
 def evaluate_resume(job_description, url):
     try:
+        # Check if OpenAI client is initialized
+        openai_client = init_openai_client()
+        if openai_client is None:
+            return {"error": "OpenAI client not properly initialized. Please check your API key in Streamlit secrets."}
+        
         pdf_reader = PDFReader(url)
         file_path = pdf_reader.get_file_path()
         resume_text = extract_text_from_pdf(file_path)
@@ -190,7 +227,7 @@ def evaluate_resume(job_description, url):
             raise Exception("Could not extract text from PDF. Please ensure the PDF is readable.")
         
         messages = messages_for(job_description, resume_text)
-        response = openai.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
             temperature=0.3
@@ -228,6 +265,11 @@ def main():
     st.markdown('<h1 class="main-header">🎯 AI-Powered ATS Scanner</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Intelligent Resume Evaluation System powered by OpenAI</p>', unsafe_allow_html=True)
     
+    # Check API key status at startup
+    openai_client = init_openai_client()
+    if openai_client is None:
+        st.stop()  # Stop execution if no valid API key
+    
     # Sidebar for settings and tips
     with st.sidebar:
         st.header("📋 How to Use")
@@ -242,14 +284,27 @@ def main():
         - More detailed job descriptions yield better analysis
         """)
         
-        st.header("🔧 Settings") 
+        # API Connection Test
+        st.header("🔧 API Status")
+        if st.button("🧪 Test OpenAI Connection"):
+            try:
+                test_response = openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": "Hello"}],
+                    max_tokens=5
+                )
+                st.success("✅ OpenAI API connection successful!")
+            except Exception as e:
+                st.error(f"❌ API test failed: {str(e)}")
+        
+        st.header("📊 Settings") 
         analysis_depth = st.selectbox(
             "Analysis Depth",
             ["Standard", "Detailed", "Comprehensive"],
             index=1
         )
         
-        st.header("📊 Recent Evaluations")
+        st.header("📈 Recent Evaluations")
         if 'evaluation_history' not in st.session_state:
             st.session_state.evaluation_history = []
         
