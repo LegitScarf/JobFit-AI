@@ -9,7 +9,7 @@ from datetime import datetime
 
 # Page configuration
 st.set_page_config(
-    page_title="JobFit AI",
+    page_title="AI-Powered ATS Scanner",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -316,7 +316,7 @@ def display_score(score):
 # Main UI
 def main():
     # Header
-    st.markdown('<h1 class="main-header">🎯 JobFit AI</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🎯 AI-Powered ATS Scanner</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Intelligent Resume Evaluation System powered by OpenAI</p>', unsafe_allow_html=True)
     
     # Check API key status at startup
