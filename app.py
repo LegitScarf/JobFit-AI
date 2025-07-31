@@ -409,7 +409,7 @@ def display_sidebar():
 
 def display_quick_stats():
     """Display quick stats in sidebar"""
-    st.subheader("🎯 Quick Stats")
+    st.subheader(" Quick Stats")
     
     if 'last_evaluation' in st.session_state:
         last_eval = st.session_state.last_evaluation
