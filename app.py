@@ -368,7 +368,7 @@ def get_score_display(score):
 def display_sidebar():
     """Display sidebar content"""
     with st.sidebar:
-        st.header("📋 How to Use")
+        st.header("How to Use")
         st.markdown("""
         1. **Paste the job description** in the text area
         2. **Add a public Google Drive link** to the resume PDF
@@ -381,7 +381,7 @@ def display_sidebar():
         """)
         
         # API Connection Test
-        st.header("🔧 API Status")
+        st.header(" API Status")
         if st.button("🧪 Test OpenAI Connection"):
             client = st.session_state.get('openai_client') or init_openai_client()
             if client:
@@ -391,14 +391,14 @@ def display_sidebar():
                         messages=[{"role": "user", "content": "Hello"}],
                         max_tokens=5
                     )
-                    st.success("✅ OpenAI API connection successful!")
+                    st.success(" OpenAI API connection successful!")
                 except Exception as e:
                     st.error(f"❌ API test failed: {str(e)}")
             else:
                 st.error("❌ OpenAI client not initialized")
         
         # Recent Evaluations
-        st.header("📈 Recent Evaluations")
+        st.header("Recent Evaluations")
         if st.session_state.evaluation_history:
             for i, eval_item in enumerate(st.session_state.evaluation_history[-3:]):
                 with st.expander(f"Evaluation {len(st.session_state.evaluation_history)-i}"):
@@ -476,7 +476,7 @@ def display_results(result):
         """, unsafe_allow_html=True)
     
     # Detailed breakdown
-    st.subheader("📊 Detailed Analysis")
+    st.subheader("Detailed Analysis")
     
     tab1, tab2, tab3, tab4 = st.tabs(["📋 Overview", "✅ Strengths", "❌ Gaps", "💡 Recommendations"])
     
@@ -498,7 +498,7 @@ def display_results(result):
         with col1:
             matching_skills = result.get('matching_skills', [])
             if matching_skills:
-                st.write("**🎯 Matching Skills:**")
+                st.write("** Matching Skills:**")
                 for skill in matching_skills:
                     st.write(f"• {skill}")
             else:
@@ -507,7 +507,7 @@ def display_results(result):
         with col2:
             key_strengths = result.get('key_strengths', [])
             if key_strengths:
-                st.write("**💪 Key Strengths:**")
+                st.write("** Key Strengths:**")
                 for strength in key_strengths:
                     st.write(f"• {strength}")
             else:
@@ -528,7 +528,7 @@ def display_results(result):
         with col2:
             areas_for_improvement = result.get('areas_for_improvement', [])
             if areas_for_improvement:
-                st.write("**📈 Areas for Improvement:**")
+                st.write("**Areas for Improvement:**")
                 for area in areas_for_improvement:
                     st.write(f"• {area}")
             else:
@@ -537,7 +537,7 @@ def display_results(result):
     with tab4:
         recommendations = result.get('recommendations', [])
         if recommendations:
-            st.write("**💡 Recommendations for Candidate:**")
+            st.write("** Recommendations for Candidate:**")
             for i, rec in enumerate(recommendations, 1):
                 st.markdown(f"""
                 <div class="tips-box">
@@ -548,7 +548,7 @@ def display_results(result):
             st.info("No specific recommendations available")
     
     # Download results option
-    st.subheader("📥 Export Results")
+    st.subheader(" Export Results")
     
     report_data = {
         "evaluation_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -557,7 +557,7 @@ def display_results(result):
     }
     
     st.download_button(
-        label="📄 Download Evaluation Report (JSON)",
+        label=" Download Evaluation Report (JSON)",
         data=json.dumps(report_data, indent=2),
         file_name=f"jobfit_ai_evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
         mime="application/json"
@@ -587,7 +587,7 @@ def main():
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.subheader("📝 Job Description")
+        st.subheader("Job Description")
         job_description = st.text_area(
             "Paste the complete job description here...",
             height=250,
