@@ -528,7 +528,7 @@ def display_results(result):
         with col2:
             areas_for_improvement = result.get('areas_for_improvement', [])
             if areas_for_improvement:
-                st.write("**Areas for Improvement:**")
+                st.write("Areas for Improvement:")
                 for area in areas_for_improvement:
                     st.write(f"• {area}")
             else:
@@ -537,7 +537,7 @@ def display_results(result):
     with tab4:
         recommendations = result.get('recommendations', [])
         if recommendations:
-            st.write("** Recommendations for Candidate:**")
+            st.write("Recommendations for Candidate:")
             for i, rec in enumerate(recommendations, 1):
                 st.markdown(f"""
                 <div class="tips-box">
@@ -617,7 +617,7 @@ def main():
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        analyze_button = st.button("🚀 Analyze Resume", use_container_width=True)
+        analyze_button = st.button("Analyze Resume", use_container_width=True)
     
     # Analysis results
     if analyze_button:
