@@ -498,7 +498,7 @@ def display_results(result):
         with col1:
             matching_skills = result.get('matching_skills', [])
             if matching_skills:
-                st.write("** Matching Skills:**")
+                st.write("Matching Skills:")
                 for skill in matching_skills:
                     st.write(f"• {skill}")
             else:
@@ -507,7 +507,7 @@ def display_results(result):
         with col2:
             key_strengths = result.get('key_strengths', [])
             if key_strengths:
-                st.write("** Key Strengths:**")
+                st.write("Key Strengths:")
                 for strength in key_strengths:
                     st.write(f"• {strength}")
             else:
